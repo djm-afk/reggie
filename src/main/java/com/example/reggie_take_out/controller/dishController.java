@@ -1,7 +1,6 @@
 package com.example.reggie_take_out.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.reggie_take_out.dto.DishDto;
 import com.example.reggie_take_out.pojo.Category;
@@ -12,15 +11,16 @@ import com.example.reggie_take_out.service.CategoryService;
 import com.example.reggie_take_out.service.DishFlavorService;
 import com.example.reggie_take_out.service.DishService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.ibatis.annotations.Delete;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.ListOperations;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.web.bind.annotation.*;
 
 import javax.websocket.server.PathParam;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -38,6 +38,8 @@ public class dishController {
     private CategoryService cs;
     @Autowired
     private DishFlavorService dls;
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     // id查询菜品
     @GetMapping("{id}")
@@ -115,22 +117,30 @@ public class dishController {
     @GetMapping("/list")
     public Result<List<DishDto>> selectDishByCategoryId(@PathParam("categoryId") Dish dish){
         Long categoryId = dish.getCategoryId();
-        log.info(categoryId.toString());
+        List<DishDto> dishDtoList = null;
+
+        String key = "categoryDish_" + categoryId;
+        ValueOperations<String,List<DishDto>> valueOperations = redisTemplate.opsForValue();
+        dishDtoList = valueOperations.get(key);
+        if (!Objects.isNull(dishDtoList)){
+            return Result.success(dishDtoList);
+        }
+
         LambdaQueryWrapper<Dish> lqw = new LambdaQueryWrapper<>();
+        lqw.eq(Dish::getStatus,1);
         lqw.eq(Dish::getCategoryId,categoryId);
         List<Dish> dishList = ds.list(lqw);
 
-        List<DishDto> dishDtoList = new ArrayList<>();
-        dishList.stream().forEach(item -> {
+        dishDtoList = dishList.stream().map(item -> {
             DishDto dishDto = new DishDto();
             BeanUtils.copyProperties(item,dishDto);
             LambdaQueryWrapper<DishFlavor> lqwdf = new LambdaQueryWrapper<>();
             lqwdf.eq(DishFlavor::getDishId,item.getId());
             List<DishFlavor> list = dls.list(lqwdf);
             dishDto.setFlavors(list);
-            dishDtoList.add(dishDto);
-        });
-
+            return dishDto;
+        }).collect(Collectors.toList());
+        valueOperations.set(key,dishDtoList);
         return Result.success(dishDtoList);
     }
 }
