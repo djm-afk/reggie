@@ -1,8 +1,6 @@
 package com.example.reggie_take_out.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.example.reggie_take_out.common.BaseContextThreadLocal;
-import com.example.reggie_take_out.common.SMSUtils;
 import com.example.reggie_take_out.common.ValidateCodeUtils;
 import com.example.reggie_take_out.pojo.User;
 import com.example.reggie_take_out.respR.Result;
@@ -21,7 +19,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
-import static net.sf.jsqlparser.util.validation.metadata.NamedObject.user;
 
 @RestController
 @RequestMapping("/user")
@@ -89,5 +86,7 @@ public class userController {
         }
 
     }
+    // 退出登录
+
 
 }

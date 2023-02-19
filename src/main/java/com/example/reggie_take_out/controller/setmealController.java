@@ -1,21 +1,18 @@
 package com.example.reggie_take_out.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.example.reggie_take_out.dto.DishDto;
 import com.example.reggie_take_out.dto.SetmealDto;
 import com.example.reggie_take_out.pojo.Category;
-import com.example.reggie_take_out.pojo.Dish;
-import com.example.reggie_take_out.pojo.DishFlavor;
 import com.example.reggie_take_out.pojo.Setmeal;
 import com.example.reggie_take_out.respR.Result;
 import com.example.reggie_take_out.service.CategoryService;
-import com.example.reggie_take_out.service.SetmealDishService;
 import com.example.reggie_take_out.service.SetmealService;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.web.bind.annotation.*;
 
 import javax.websocket.server.PathParam;
@@ -32,6 +29,8 @@ public class setmealController {
     private SetmealService ss;
     @Autowired
     private CategoryService cs;
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     // 新增套餐
     @PostMapping()
@@ -109,14 +108,21 @@ public class setmealController {
     // 查询套餐数据
     @GetMapping("/list")
     public Result<List<Setmeal>> selectDishByCategoryId(@PathParam("categoryId") Setmeal setmeal){
+        Long categoryId = setmeal.getCategoryId();
+        String key = "categorySetmeal_" + categoryId;
+        ValueOperations<String,List<Setmeal>> valueOperations = redisTemplate.opsForValue();
+        List<Setmeal> setmealList = null;
+        setmealList = valueOperations.get(key);
+        if (!Objects.isNull(setmealList)){
+            return Result.success(setmealList);
+        }
         LambdaQueryWrapper<Setmeal> lqw =new LambdaQueryWrapper<>();
         lqw.eq(!Objects.isNull(setmeal.getCategoryId()),Setmeal::getCategoryId,setmeal.getCategoryId());
         lqw.eq(!Objects.isNull(setmeal.getStatus()),Setmeal::getStatus,setmeal.getStatus());
         lqw.orderByDesc(Setmeal::getUpdateTime);
-        List<Setmeal> setmealList = ss.list(lqw);
-
+        setmealList = ss.list(lqw);
+        valueOperations.set(key,setmealList);
         return Result.success(setmealList);
     }
-
 
 }

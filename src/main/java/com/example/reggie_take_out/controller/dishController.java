@@ -14,7 +14,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.ListOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.web.bind.annotation.*;
@@ -81,6 +80,8 @@ public class dishController {
     // 新增菜品
     @PostMapping()
     public Result<String> save(@RequestBody DishDto dishDto){
+        Long categoryId = dishDto.getCategoryId();
+        redisTemplate.delete("categoryDish_" + categoryId);
         boolean save = ds.saveWithFlavor(dishDto);
         return save ? Result.success("保存成功！") : Result.error("保存失败！");
     }
@@ -88,6 +89,8 @@ public class dishController {
     // 修改菜品
     @PutMapping()
     public Result<String> update(@RequestBody DishDto dishDto){
+        Long categoryId = dishDto.getCategoryId();
+        redisTemplate.delete("categoryDish_" + categoryId);
         boolean update = ds.updateWithFlavor(dishDto);
         return update ? Result.success("修改成功！") : Result.error("修改失败！");
     }
