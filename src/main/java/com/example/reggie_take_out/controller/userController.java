@@ -13,6 +13,7 @@ import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 import java.util.Map;
@@ -53,7 +54,7 @@ public class userController {
     }
 
     // 手机验证码登录（移动端）
-    @PostMapping("/login")
+    @PostMapping("/loginout")
     @Transactional
     public Result<User> login(HttpSession session, @RequestBody Map map){
         // 获取手机号
@@ -87,6 +88,10 @@ public class userController {
 
     }
     // 退出登录
-
+    @PostMapping("/logout")
+    public Result logout(HttpServletRequest request){
+        request.getSession().removeAttribute("user");
+        return Result.success("退出成功");
+    }
 
 }
