@@ -11,6 +11,9 @@ import com.example.reggie_take_out.service.SetmealService;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.web.bind.annotation.*;
@@ -34,6 +37,7 @@ public class setmealController {
 
     // 新增套餐
     @PostMapping()
+    @CacheEvict(value = "setmealCache",allEntries = true)
     public Result<String> saveSetmealDish(@RequestBody SetmealDto setmealDto){
         boolean save = ss.saveWithFlavor(setmealDto);
         return save ? Result.success("新增套餐成功") : Result.success("新增套餐失败");
@@ -48,6 +52,7 @@ public class setmealController {
 
     // 修改套餐
     @PutMapping()
+    @CacheEvict(value = "setmealCache",allEntries = true)
     public Result<String> update(@RequestBody SetmealDto setmealDto){
         boolean update = ss.updateWithFlavor(setmealDto);
         return update ? Result.success("修改成功！") : Result.error("修改失败！");
@@ -55,6 +60,7 @@ public class setmealController {
 
     // 停/启售
     @PostMapping("/status/{status}")
+    @CacheEvict(value = "setmealCache",allEntries = true)
     public Result<String> status(@PathParam("ids") Long[] ids,@PathVariable Integer status){
         List<Setmeal> setmealList = new ArrayList<>();
         Stream<Long> stream = Arrays.stream(ids);
@@ -70,6 +76,7 @@ public class setmealController {
 
     // 删除菜品
     @DeleteMapping()
+    @CacheEvict(value = "setmealCache",allEntries = true)
     public Result<String> delete(@PathParam("ids") Long[] ids){
         boolean delete = ss.deleteByIdWithFlavor(ids);
         return delete ? Result.success("删除成功！") : Result.error("删除失败！");
@@ -107,21 +114,22 @@ public class setmealController {
     // front
     // 查询套餐数据
     @GetMapping("/list")
+    @Cacheable(value = "setmealCache",key = "#setmeal.categoryId")
     public Result<List<Setmeal>> selectDishByCategoryId(@PathParam("categoryId") Setmeal setmeal){
         Long categoryId = setmeal.getCategoryId();
-        String key = "categorySetmeal_" + categoryId;
-        ValueOperations<String,List<Setmeal>> valueOperations = redisTemplate.opsForValue();
+//        String key = "categorySetmeal_" + categoryId;
+//        ValueOperations<String,List<Setmeal>> valueOperations = redisTemplate.opsForValue();
         List<Setmeal> setmealList = null;
-        setmealList = valueOperations.get(key);
-        if (!Objects.isNull(setmealList)){
-            return Result.success(setmealList);
-        }
+//        setmealList = valueOperations.get(key);
+//        if (!Objects.isNull(setmealList)){
+//            return Result.success(setmealList);
+//        }
         LambdaQueryWrapper<Setmeal> lqw =new LambdaQueryWrapper<>();
         lqw.eq(!Objects.isNull(setmeal.getCategoryId()),Setmeal::getCategoryId,setmeal.getCategoryId());
         lqw.eq(!Objects.isNull(setmeal.getStatus()),Setmeal::getStatus,setmeal.getStatus());
         lqw.orderByDesc(Setmeal::getUpdateTime);
         setmealList = ss.list(lqw);
-        valueOperations.set(key,setmealList);
+//        valueOperations.set(key,setmealList);
         return Result.success(setmealList);
     }
 

@@ -14,6 +14,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
@@ -74,12 +76,12 @@ public class dishController {
             list.add(dishDto);
         }
         dishDtoPage.setRecords(list);
-
         return Result.success(dishDtoPage);
     }
 
     // 新增菜品
     @PostMapping()
+    @CacheEvict(value = "dishCache",allEntries = true)
     public Result<String> save(@RequestBody DishDto dishDto){
         Long categoryId = dishDto.getCategoryId();
         redisTemplate.delete("categoryDish_" + categoryId);
@@ -89,6 +91,7 @@ public class dishController {
 
     // 修改菜品
     @PutMapping()
+    @CacheEvict(value = "dishCache",allEntries = true)
     public Result<String> update(@RequestBody DishDto dishDto){
         Long categoryId = dishDto.getCategoryId();
         redisTemplate.delete("categoryDish_" + categoryId);
@@ -98,6 +101,7 @@ public class dishController {
 
     // 停/启售
     @PostMapping("/status/{status}")
+    @CacheEvict(value = "dishCache",allEntries = true)
     public Result<String> status(@PathParam("ids") Long[] ids,@PathVariable Integer status){
         List<Dish> dishList = new ArrayList<>();
         for (Long id : ids) {
@@ -112,6 +116,7 @@ public class dishController {
 
     // 删除菜品
     @DeleteMapping()
+    @CacheEvict(value = "dishCache",allEntries = true)
     public Result<String> delete(@PathParam("ids") Long[] ids){
         boolean delete = ds.deleteByIdWithFlavor(ids);
         return delete ? Result.success("删除成功！") : Result.error("删除失败！");
@@ -119,16 +124,17 @@ public class dishController {
 
     // 查询菜品
     @GetMapping("/list")
+    @Cacheable(value = "dishCache",key = "#dish.categoryId")
     public Result<List<DishDto>> selectDishByCategoryId(@PathParam("categoryId") Dish dish){
         Long categoryId = dish.getCategoryId();
         List<DishDto> dishDtoList = null;
 
-        String key = "categoryDish_" + categoryId;
-        ValueOperations<String,List<DishDto>> valueOperations = redisTemplate.opsForValue();
-        dishDtoList = valueOperations.get(key);
-        if (!Objects.isNull(dishDtoList)){
-            return Result.success(dishDtoList);
-        }
+//        String key = "categoryDish_" + categoryId;
+//        ValueOperations<String,List<DishDto>> valueOperations = redisTemplate.opsForValue();
+//        dishDtoList = valueOperations.get(key);
+//        if (!Objects.isNull(dishDtoList)){
+//            return Result.success(dishDtoList);
+//        }
 
         LambdaQueryWrapper<Dish> lqw = new LambdaQueryWrapper<>();
         lqw.eq(Dish::getStatus,1);
@@ -144,7 +150,7 @@ public class dishController {
             dishDto.setFlavors(list);
             return dishDto;
         }).collect(Collectors.toList());
-        valueOperations.set(key,dishDtoList);
+//        valueOperations.set(key,dishDtoList);
         return Result.success(dishDtoList);
     }
 }

@@ -2,16 +2,12 @@ package com.example.reggie_take_out.config;
 
 
 import com.alibaba.fastjson.support.spring.GenericFastJsonRedisSerializer;
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.PropertyAccessor;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericToStringSerializer;
-import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
-import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 /**
  * 辉煌明天
@@ -22,6 +18,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
  * Description: Redis配置类
  */
 @Configuration
+@EnableCaching //开启缓存配置
 public class RedisConfiguration {
     @Bean
     public RedisTemplate<Object, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
