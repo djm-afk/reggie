@@ -32,7 +32,12 @@ public class LoginCheckSupport extends WebMvcConfigurationSupport {
                         "/backend/**",
                         "/front/**",
                         "/user/sendMsg",
-                        "/user/login");
+                        "/user/login",
+                        // Swagger文件
+                        "/webjars/**",
+                        "/doc.html",
+                        "/swagger-resources",
+                        "/v2/api-docs");
     }
 //    拦截静态资源
     @Override
@@ -40,6 +45,8 @@ public class LoginCheckSupport extends WebMvcConfigurationSupport {
         log.info("开始进行静态资源映射");
         registry.addResourceHandler("/backend/**").addResourceLocations("classpath:/backend/");
         registry.addResourceHandler("/front/**").addResourceLocations("classpath:/front/");
+        registry.addResourceHandler("/webjars/**").addResourceLocations("classpath:/META-INF/resources/webjars/");
+        registry.addResourceHandler("doc.html").addResourceLocations("classpath:/META-INF/resources/");
     }
 
     /*

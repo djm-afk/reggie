@@ -68,6 +68,12 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- Swagger -->
+        <dependency>
+            <groupId>com.github.xiaoymin</groupId>
+            <artifactId>knife4j-spring-boot-starter</artifactId>
+            <version>3.0.2</version>
+        </dependency>
         <!-- 阿里云短信服务所用 -->
         <dependency>
             <groupId>com.aliyun</groupId>

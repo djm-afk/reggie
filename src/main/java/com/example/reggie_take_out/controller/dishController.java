@@ -83,8 +83,6 @@ public class dishController {
     @PostMapping()
     @CacheEvict(value = "dishCache",allEntries = true)
     public Result<String> save(@RequestBody DishDto dishDto){
-        Long categoryId = dishDto.getCategoryId();
-        redisTemplate.delete("categoryDish_" + categoryId);
         boolean save = ds.saveWithFlavor(dishDto);
         return save ? Result.success("保存成功！") : Result.error("保存失败！");
     }
@@ -94,7 +92,6 @@ public class dishController {
     @CacheEvict(value = "dishCache",allEntries = true)
     public Result<String> update(@RequestBody DishDto dishDto){
         Long categoryId = dishDto.getCategoryId();
-        redisTemplate.delete("categoryDish_" + categoryId);
         boolean update = ds.updateWithFlavor(dishDto);
         return update ? Result.success("修改成功！") : Result.error("修改失败！");
     }

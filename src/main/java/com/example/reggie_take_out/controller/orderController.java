@@ -1,12 +1,27 @@
 package com.example.reggie_take_out.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.reggie_take_out.common.BaseContextThreadLocal;
+import com.example.reggie_take_out.dto.DishDto;
+import com.example.reggie_take_out.pojo.Category;
+import com.example.reggie_take_out.pojo.Dish;
 import com.example.reggie_take_out.pojo.Orders;
 import com.example.reggie_take_out.respR.Result;
 import com.example.reggie_take_out.service.OrdersService;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import javax.websocket.server.PathParam;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/order")
@@ -26,4 +41,46 @@ public class orderController {
         return submit ? Result.success("下单成功") : Result.success("下单失败");
     }
 
+    // 查看订单
+//    &beginTime=2023-02-21%2000%3A00%3A00&endTime=2023-02-22%2023%3A59%3A59
+    @GetMapping("/page")
+    public Result<Page> selectByPage(@PathParam("page") Integer page, @PathParam("pageSize") Integer pageSize,
+                                     @PathParam("beginTime") String beginTime, @PathParam("endTime")String endTime,
+                                     @PathParam("number") Long number){
+        LambdaQueryWrapper<Orders> lqw = new LambdaQueryWrapper();
+        lqw.gt(!Objects.isNull(beginTime),Orders::getOrderTime,beginTime);
+        lqw.lt(!Objects.isNull(endTime),Orders::getOrderTime,endTime);
+        lqw.eq(!Objects.isNull(number), Orders::getNumber,number);
+        lqw.orderByAsc(Orders::getOrderTime);
+        Page page_ = os.page(new Page(page, pageSize), lqw);
+        long pages = page_.getPages();
+        if (pages < page){
+            page_ = os.page(new Page(pages, pageSize), lqw);
+        }
+        return Result.success(page_);
+
+        /*// 对象拷贝
+        Page<DishDto> dishDtoPage = new Page<>();
+        BeanUtils.copyProperties(page_,dishDtoPage,"records");
+        // 处理records
+        List<Dish> records = page_.getRecords();
+        List<DishDto> list = new ArrayList<>();
+        for (Dish record : records) {
+            DishDto dishDto = new DishDto();
+            BeanUtils.copyProperties(record,dishDto);
+            Category category = cs.getById(record.getCategoryId());
+            dishDto.setCategoryName(category.getName());
+            list.add(dishDto);
+        }
+        dishDtoPage.setRecords(list);
+        return Result.success(dishDtoPage);*/
+    }
+
+    // 派送
+    @PutMapping()
+    public Result<String> delivery(@RequestBody Orders orders){
+        log.info(orders.toString());
+        boolean update = os.updateById(orders);
+        return update ? Result.success("派送成功") : Result.success("派送失败");
+    }
 }
