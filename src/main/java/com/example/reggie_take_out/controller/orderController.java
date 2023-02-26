@@ -42,7 +42,6 @@ public class orderController {
     }
 
     // 查看订单
-//    &beginTime=2023-02-21%2000%3A00%3A00&endTime=2023-02-22%2023%3A59%3A59
     @GetMapping("/page")
     public Result<Page> selectByPage(@PathParam("page") Integer page, @PathParam("pageSize") Integer pageSize,
                                      @PathParam("beginTime") String beginTime, @PathParam("endTime")String endTime,
@@ -58,22 +57,6 @@ public class orderController {
             page_ = os.page(new Page(pages, pageSize), lqw);
         }
         return Result.success(page_);
-
-        /*// 对象拷贝
-        Page<DishDto> dishDtoPage = new Page<>();
-        BeanUtils.copyProperties(page_,dishDtoPage,"records");
-        // 处理records
-        List<Dish> records = page_.getRecords();
-        List<DishDto> list = new ArrayList<>();
-        for (Dish record : records) {
-            DishDto dishDto = new DishDto();
-            BeanUtils.copyProperties(record,dishDto);
-            Category category = cs.getById(record.getCategoryId());
-            dishDto.setCategoryName(category.getName());
-            list.add(dishDto);
-        }
-        dishDtoPage.setRecords(list);
-        return Result.success(dishDtoPage);*/
     }
 
     // 派送
